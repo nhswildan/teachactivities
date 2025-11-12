@@ -241,14 +241,17 @@ function renderCards(){
   const wrap = el('cardsWrap');
   wrap.innerHTML = '';
   CLASSES.forEach(c=>{
+    // cari key di entries yang cocok dengan kelas (trim untuk spasi ekstra)
+    const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
+    const count = firebaseKey ? Object.keys(entries[firebaseKey]).length : 0;
+
     const card = document.createElement('div');
     card.className='card';
-    const count = entries[c]?Object.keys(entries[c]).length:0;
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
     card.onclick=()=>{
       document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));
       card.classList.add('active');
-      currentClass=c;
+      currentClass = c;
       renderTable(c);
     };
     wrap.appendChild(card);
@@ -259,8 +262,9 @@ function renderTable(c){
   const wrap = el('tableWrap'); 
   wrap.innerHTML='';
 
-  const rowsObj = entries[c] || {};
-  const keys = Object.keys(rowsObj);
+  const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
+  const rowsObj = firebaseKey ? entries[firebaseKey] : {};
+  const keys = Object.keys(rowsObj || {});
 
   let html = `
     <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
@@ -296,7 +300,7 @@ function renderTable(c){
           <td>${r.aktivitas.map(escapeHtml).join(', ')}</td>
           <td>${r.kehadiran.map(escapeHtml).join('<br>')}</td>
           <td>${escapeHtml(r.catatan)}</td>
-          <td><button class="btn red" onclick="deleteEntry('${c}','${k}')">Hapus</button></td>
+          <td><button class="btn red" onclick="deleteEntry('${firebaseKey}','${k}')">Hapus</button></td>
         </tr>
       `;
     });
@@ -358,8 +362,6 @@ function addKehadiran(){
 function performSave(){
   const k=el('kelas').value.trim(); 
   if(!k) return alert('Pilih kelas dulu!');
-  if(!CLASSES.includes(k)) return alert('Kelas tidak valid!');
-  
   const data={
     tanggal:el('tanggal').value,
     pertemuan:el('pertemuan').value,
@@ -372,12 +374,8 @@ function performSave(){
     }).filter(Boolean),
     catatan:el('catatan').value
   };
-  
   if(!data.tanggal||!data.pertemuan||!data.topik) return alert('Lengkapi data dulu!');
-  
   push(ref(db, `entries/${k}`), data);
-  
-  // reset form
   el('aktivitasList').innerHTML=''; 
   el('attendanceContainer').innerHTML='';
   el('topik').value=''; 

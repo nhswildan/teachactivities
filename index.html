@@ -82,6 +82,38 @@ table{width:100%;border-collapse:collapse;background:var(--card);border-radius:1
 thead th{background:#fafcff;padding:12px;text-align:left;font-weight:700}
 tbody td{padding:12px;border-top:1px solid #f3f5f8;text-align:left;vertical-align:top;font-size:14px}
 tbody tr:hover{background:linear-gradient(90deg,rgba(21,72,191,0.03),transparent)}
+
+@media (max-width:768px){
+  .form-row{flex-direction:column;}
+  .cards-wrap{flex-direction:column;}
+  .table-wrap table, .table-wrap thead, .table-wrap tbody, .table-wrap th, .table-wrap td, .table-wrap tr{
+    display:block;
+  }
+  .table-wrap thead{display:none;}
+  .table-wrap td{
+    padding:8px;
+    border:none;
+    border-bottom:1px solid #ddd;
+    position:relative;
+    padding-left:50%;
+    text-align:left;
+  }
+  .table-wrap td:before{
+    position:absolute;
+    top:8px;
+    left:8px;
+    width:45%;
+    white-space:nowrap;
+    font-weight:600;
+  }
+  .table-wrap td:nth-of-type(1):before{content:"Tanggal";}
+  .table-wrap td:nth-of-type(2):before{content:"Pertemuan";}
+  .table-wrap td:nth-of-type(3):before{content:"Topik";}
+  .table-wrap td:nth-of-type(4):before{content:"Aktivitas";}
+  .table-wrap td:nth-of-type(5):before{content:"Kehadiran";}
+  .table-wrap td:nth-of-type(6):before{content:"Catatan";}
+  .table-wrap td:nth-of-type(7):before{content:"Aksi";}
+}
 </style>
 </head>
 <body>
@@ -213,7 +245,12 @@ function renderCards(){
     card.className='card';
     const count = entries[c]?Object.keys(entries[c]).length:0;
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
-    card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));card.classList.add('active');currentClass=c;renderTable(c)};
+    card.onclick=()=>{
+      document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));
+      card.classList.add('active');
+      currentClass=c;
+      renderTable(c);
+    };
     wrap.appendChild(card);
   });
 }
@@ -226,10 +263,11 @@ function renderTable(c){
   const keys = Object.keys(rowsObj);
 
   let html = `
-    <div style="display:flex;justify-content:end;gap:10px;margin-bottom:10px">
+    <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
       <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
       <button class="btn" onclick="exportPDF('${c}')">Export PDF</button>
     </div>
+    <div style="overflow-x:auto">
     <table>
       <thead>
         <tr>
@@ -254,17 +292,17 @@ function renderTable(c){
         <tr>
           <td>${formatDate(r.tanggal)}</td>
           <td>${r.pertemuan}</td>
-          <td>${r.topik}</td>
-          <td>${r.aktivitas.join(', ')}</td>
-          <td>${r.kehadiran.join('<br>')}</td>
-          <td>${r.catatan}</td>
+          <td>${escapeHtml(r.topik)}</td>
+          <td>${r.aktivitas.map(escapeHtml).join(', ')}</td>
+          <td>${r.kehadiran.map(escapeHtml).join('<br>')}</td>
+          <td>${escapeHtml(r.catatan)}</td>
           <td><button class="btn red" onclick="deleteEntry('${c}','${k}')">Hapus</button></td>
         </tr>
       `;
     });
   }
 
-  html += `</tbody></table>`;
+  html += `</tbody></table></div>`;
   wrap.innerHTML = html;
 }
 
@@ -274,10 +312,17 @@ window.exportPDF = (kelas) => {
   printWindow.document.write(`
     <html><head><title>Journal - ${kelas}</title>
     <style>
-      body { font-family: Arial, sans-serif; margin: 20px; }
-      table { width: 100%; border-collapse: collapse; }
-      th, td { border: 1px solid #ddd; padding: 8px; }
-      th { background: #f2f2f2; }
+      body { font-family: 'Noto Sans', sans-serif; margin: 20px; background:#f7f8fb; color:#0f172a; }
+      h2 { text-align:center; margin-bottom:20px; }
+      table { width: 100%; border-collapse: collapse; background:#fff; border-radius:10px; overflow:hidden; }
+      th, td { border: 1px solid #ddd; padding: 8px; text-align:left; vertical-align:top; }
+      th { background: #f0f4ff; }
+      tr:hover { background: #e0e7ff; }
+      @media print {
+        body { margin:0; }
+        table { page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+      }
     </style>
     </head><body>
       <h2>Journal Activities - ${kelas}</h2>
@@ -296,7 +341,9 @@ function addAktivitas(){
   const val=el('aktivitasSelect').value; if(!val)return;
   const list=el('aktivitasList');
   const chip=document.createElement('div'); chip.className='chip';
-  chip.innerHTML=`${val}<span class="x" onclick="this.parentElement.remove()">×</span>`;
+  chip.textContent = val;
+  const x = document.createElement('span'); x.className='x'; x.textContent='×'; x.onclick=()=>chip.remove();
+  chip.appendChild(x);
   list.appendChild(chip);
   el('aktivitasSelect').value='';
 }
@@ -309,22 +356,34 @@ function addKehadiran(){
 }
 
 function performSave(){
-  const k=el('kelas').value; if(!k)return alert('Pilih kelas dulu!');
+  const k=el('kelas').value.trim(); 
+  if(!k) return alert('Pilih kelas dulu!');
+  if(!CLASSES.includes(k)) return alert('Kelas tidak valid!');
+  
   const data={
     tanggal:el('tanggal').value,
     pertemuan:el('pertemuan').value,
     topik:el('topik').value,
-    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.childNodes[0].nodeValue.trim()),
+    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.textContent.replace('×','').trim()),
     kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
-      const nama=r.querySelector('input').value; const st=r.querySelector('select').value;
-      return `${nama} (${st.charAt(0)})`;
-    }),
+      const nama=r.querySelector('input').value.trim(); 
+      const st=r.querySelector('select').value;
+      return nama ? `${nama} (${st.charAt(0)})` : null;
+    }).filter(Boolean),
     catatan:el('catatan').value
   };
-  if(!data.tanggal||!data.pertemuan||!data.topik)return alert('Lengkapi data dulu!');
+  
+  if(!data.tanggal||!data.pertemuan||!data.topik) return alert('Lengkapi data dulu!');
+  
   push(ref(db, `entries/${k}`), data);
-  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML='';
-  el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
+  
+  // reset form
+  el('aktivitasList').innerHTML=''; 
+  el('attendanceContainer').innerHTML='';
+  el('topik').value=''; 
+  el('pertemuan').value=''; 
+  el('catatan').value=''; 
+  el('tanggal').value='';
 }
 
 function subscribe(){

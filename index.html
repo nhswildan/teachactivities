@@ -241,10 +241,8 @@ function renderCards(){
   const wrap = el('cardsWrap');
   wrap.innerHTML = '';
   CLASSES.forEach(c=>{
-    // cari key di entries yang cocok dengan kelas (trim untuk spasi ekstra)
     const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
     const count = firebaseKey ? Object.keys(entries[firebaseKey]).length : 0;
-
     const card = document.createElement('div');
     card.className='card';
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
@@ -261,11 +259,9 @@ function renderCards(){
 function renderTable(c){
   const wrap = el('tableWrap'); 
   wrap.innerHTML='';
-
   const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
   const rowsObj = firebaseKey ? entries[firebaseKey] : {};
   const keys = Object.keys(rowsObj || {});
-
   let html = `
     <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
       <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
@@ -286,7 +282,6 @@ function renderTable(c){
       </thead>
       <tbody>
   `;
-
   if(keys.length===0){
     html += '<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
   } else {
@@ -305,7 +300,6 @@ function renderTable(c){
       `;
     });
   }
-
   html += `</tbody></table></div>`;
   wrap.innerHTML = html;
 }

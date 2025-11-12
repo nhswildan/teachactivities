@@ -198,85 +198,81 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(21,72,191,0.03),transparent
   </div>
 </div>
 
-<script>
-const CLASSES=["G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi","G10 A Geografi","G10 B Geografi","G10 Inter A Geografi","G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"];
-const STORAGE_KEY='journal_entries_v5';
-let entries={}, currentAction=null, currentClass=null, deleteIndex=null;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getDatabase, ref, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-const el=id=>document.getElementById(id);
+const firebaseConfig = {
+  apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
+  authDomain: "journal-nhs.firebaseapp.com",
+  projectId: "journal-nhs",
+  storageBucket: "journal-nhs.firebasestorage.app",
+  messagingSenderId: "162381796113",
+  appId: "1:162381796113:web:4c65bd5c934ce9af55f2b0",
+  measurementId: "G-8M7RF0P9NG",
+  databaseURL: "https://journal-nhs-default-rtdb.asia-southeast1.firebasedatabase.app/"
+};
 
-function loadEntries(){
-  entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-  CLASSES.forEach(c=>{if(!entries[c]) entries[c]=[]});
-}
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
-function saveEntries(){localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));}
+const CLASSES = [
+  "G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi",
+  "G10 A Geografi","G10 B Geografi","G10 Inter A Geografi",
+  "G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"
+];
+
+const el = id => document.getElementById(id);
+let currentClass = null;
+let entries = {};
 
 function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
-
-function formatDate(dateStr){
-  if(!dateStr) return '';
-  const [y,m,d]=dateStr.split('-');
-  return `${d}/${m}/${y}`;
-}
+function formatDate(dateStr){if(!dateStr)return'';const [y,m,d]=dateStr.split('-');return`${d}/${m}/${y}`;}
 
 function renderCards(){
-  const wrap=el('cardsWrap'); wrap.innerHTML='';
+  const wrap = el('cardsWrap');
+  wrap.innerHTML = '';
   CLASSES.forEach(c=>{
-    const card=document.createElement('div');
+    const card = document.createElement('div');
     card.className='card';
-    const count=entries[c].length;
+    const count = entries[c]?Object.keys(entries[c]).length:0;
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
-    card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active')); card.classList.add('active'); renderTable(c)};
+    card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));card.classList.add('active');renderTable(c)};
     wrap.appendChild(card);
   });
 }
 
 function renderTable(c){
-  const wrap=el('tableWrap'); wrap.innerHTML='';
-  const rows=entries[c];
-  let html=`<div style="display:flex;justify-content:end;margin-bottom:10px">
+  const wrap = el('tableWrap'); wrap.innerHTML='';
+  const rowsObj = entries[c] || {};
+  const keys = Object.keys(rowsObj);
+  let html = `<div style="display:flex;justify-content:end;margin-bottom:10px">
     <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
-    <button class="btn" style="margin-left:8px" onclick="exportTableToPDF('${c}')">Export PDF</button>
   </div>`;
-  html+=`<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
-  if(rows.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
-  else rows.forEach((r,i)=>html+=`<tr>
-    <td>${formatDate(r.tanggal)}</td>
-    <td>${r.pertemuan}</td>
-    <td>${r.topik}</td>
-    <td>${r.aktivitas.join(', ')}</td>
-    <td>${r.kehadiran.join('<br>')}</td>
-    <td>${r.catatan}</td>
-    <td><button class="btn red" onclick="confirmDelete('${c}',${i})">Hapus</button></td>
-  </tr>`);
-  html+='</tbody></table>'; wrap.innerHTML=html;
+  html += `<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
+  if(keys.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
+  else keys.forEach(k=>{
+    const r = rowsObj[k];
+    html += `<tr>
+      <td>${formatDate(r.tanggal)}</td>
+      <td>${r.pertemuan}</td>
+      <td>${r.topik}</td>
+      <td>${r.aktivitas.join(', ')}</td>
+      <td>${r.kehadiran.join('<br>')}</td>
+      <td>${r.catatan}</td>
+      <td><button class="btn red" onclick="deleteEntry('${c}','${k}')">Hapus</button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  wrap.innerHTML = html;
 }
 
-function exportTableToPDF(c){
-  const rows=entries[c];
-  const w=window.open('','_blank');
-  let html=`<html><head><title>${c}</title></head><body><h2>${c}</h2>
-    <table border="1" cellspacing="0" cellpadding="6" width="100%">
-    <tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th></tr>`;
-  rows.forEach(r=>{html+=`<tr><td>${formatDate(r.tanggal)}</td><td>${r.pertemuan}</td><td>${r.topik}</td><td>${r.aktivitas.join(', ')}</td><td>${r.kehadiran.join('<br>')}</td><td>${r.catatan}</td></tr>`;});
-  html+='</table></body></html>'; w.document.write(html); w.print();
-}
-
-function confirmSave(){currentAction='save'; el('popupMessage').innerText='Sudah yakin dengan data ini?'; el('popup').style.display='flex';}
-function confirmDelete(c,i){currentAction='delete'; currentClass=c; deleteIndex=i; el('popupMessage').innerText='Yakin hapus data ini?'; el('popup').style.display='flex';}
-
-el('popupNo').onclick=()=>el('popup').style.display='none';
-el('popupYes').onclick=()=>{
-  if(currentAction==='save'){performSave();}
-  else if(currentAction==='delete'){performDelete();}
-  el('popup').style.display='none';
+window.deleteEntry = (c, key)=>{
+  remove(ref(db, `entries/${c}/${key}`));
 };
 
-function performDelete(){entries[currentClass].splice(deleteIndex,1); saveEntries(); renderTable(currentClass); renderCards();}
-
 function addAktivitas(){
-  const val=el('aktivitasSelect').value; if(!val) return;
+  const val=el('aktivitasSelect').value; if(!val)return;
   const list=el('aktivitasList');
   const chip=document.createElement('div'); chip.className='chip';
   chip.innerHTML=`${val}<span class="x" onclick="this.parentElement.remove()">×</span>`;
@@ -292,7 +288,7 @@ function addKehadiran(){
 }
 
 function performSave(){
-  const k=el('kelas').value; if(!k) return;
+  const k=el('kelas').value; if(!k)return alert('Pilih kelas dulu!');
   const data={
     tanggal:el('tanggal').value,
     pertemuan:el('pertemuan').value,
@@ -304,18 +300,26 @@ function performSave(){
     }),
     catatan:el('catatan').value
   };
-  if(!data.tanggal||!data.pertemuan||!data.topik) return;
-  entries[k].push(data); saveEntries(); renderCards(); renderTable(k);
-  // Bersihkan form
-  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML=''; el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
+  if(!data.tanggal||!data.pertemuan||!data.topik)return alert('Lengkapi data dulu!');
+  push(ref(db, `entries/${k}`), data);
+  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML='';
+  el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
+}
+
+function subscribe(){
+  onValue(ref(db, 'entries'), snapshot=>{
+    entries = snapshot.val() || {};
+    renderCards();
+    if(currentClass) renderTable(currentClass);
+  });
 }
 
 el('addAktivitasBtn').onclick=addAktivitas;
 el('addAttBtn').onclick=addKehadiran;
-el('saveBtn').onclick=confirmSave;
+el('saveBtn').onclick=performSave;
 
-(function init(){loadEntries();renderCards();})();
+subscribe();
 </script>
-</script>
+
 </body>
 </html>

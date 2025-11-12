@@ -230,7 +230,6 @@ const CLASSES = [
   "G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"
 ];
 
-// Mapping nama kelas ke key Firebase
 const kelasKeyMap = {
   "G12 Antropologi":"G12_Antropologi",
   "G11 - 1 Antropologi":"G11_1_Antropologi",
@@ -274,7 +273,8 @@ function renderTable(c){
   wrap.innerHTML='';
   const key = kelasKeyMap[c];
   const rowsObj = entries[key] || {};
-  const keys = Object.keys(rowsObj);
+  const rows = Object.entries(rowsObj); // [keyFirebase, data]
+
   let html = `
     <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
       <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
@@ -295,11 +295,11 @@ function renderTable(c){
       </thead>
       <tbody>
   `;
-  if(keys.length===0){
+
+  if(rows.length===0){
     html += '<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
   } else {
-    keys.forEach(k=>{
-      const r = rowsObj[k];
+    rows.forEach(([k, r])=>{
       html += `
         <tr>
           <td>${formatDate(r.tanggal)}</td>
@@ -313,7 +313,8 @@ function renderTable(c){
       `;
     });
   }
-  html += `</tbody></table></div>`;
+
+  html += '</tbody></table></div>';
   wrap.innerHTML = html;
 }
 

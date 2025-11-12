@@ -249,6 +249,7 @@ let entries = {};
 function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
 function formatDate(dateStr){if(!dateStr)return'';const [y,m,d]=dateStr.split('-');return`${d}/${m}/${y}`;}
 
+// ✅ PERBAIKAN DI SINI
 function renderCards(){
   const wrap = el('cardsWrap');
   wrap.innerHTML = '';
@@ -258,6 +259,10 @@ function renderCards(){
     const card = document.createElement('div');
     card.className='card';
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
+    
+    // Tambahkan class active jika kelas ini sedang dipilih
+    if (currentClass === c) card.classList.add('active');
+
     card.onclick=()=>{
       document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));
       card.classList.add('active');
@@ -268,12 +273,14 @@ function renderCards(){
   });
 }
 
+// ✅ PERBAIKAN DI SINI
 function renderTable(c){
+  if (!c) return;
   const wrap = el('tableWrap'); 
   wrap.innerHTML='';
   const key = kelasKeyMap[c];
   const rowsObj = entries[key] || {};
-  const rows = Object.entries(rowsObj); // [keyFirebase, data]
+  const rows = Object.entries(rowsObj);
 
   let html = `
     <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
@@ -349,56 +356,55 @@ function addAktivitas(){
   const list=el('aktivitasList');
   const chip=document.createElement('div'); chip.className='chip';
   chip.textContent = val;
-  const x = document.createElement('span'); x.className='x'; x.textContent='×'; x.onclick=()=>chip.remove();
+  const x = document.createElement('span'); x.className='x'; x.textContent='×';
+  x.onclick=()=>chip.remove();
   chip.appendChild(x);
   list.appendChild(chip);
   el('aktivitasSelect').value='';
 }
 
-function addKehadiran(){
+function addAttendanceRow(){
   const cont=el('attendanceContainer');
-  const row=document.createElement('div'); row.className='att-row';
-  row.innerHTML=`<input type="text" placeholder="Nama siswa"><select><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select><button class="del-x" onclick="this.parentElement.remove()">×</button>`;
+  const row=document.createElement('div');
+  row.className='att-row';
+  row.innerHTML=`<input placeholder="Nama"><select>
+      <option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpha</option>
+    </select><button class="del-x" type="button">×</button>`;
+  row.querySelector('.del-x').onclick=()=>row.remove();
   cont.appendChild(row);
 }
 
-function performSave(){
-  const k=el('kelas').value.trim(); 
-  if(!k) return alert('Pilih kelas dulu!');
-  const kelasKey = kelasKeyMap[k];
-  const data = {
-    tanggal: el('tanggal').value,
-    pertemuan: el('pertemuan').value,
-    topik: el('topik').value,
-    aktivitas: [...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.textContent.replace('×','').trim()),
-    kehadiran: [...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
-      const nama=r.querySelector('input').value.trim(); 
-      const st=r.querySelector('select').value;
-      return nama ? `${nama} (${st.charAt(0)})` : null;
-    }).filter(Boolean),
-    catatan: el('catatan').value
-  };
-  if(!data.tanggal || !data.pertemuan || !data.topik) return alert('Lengkapi data dulu!');
-  push(ref(db, `entries/${kelasKey}`), data);
-  el('aktivitasList').innerHTML=''; 
-  el('attendanceContainer').innerHTML='';
-  el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
-}
-
-function subscribe(){
-  onValue(ref(db, 'entries'), snapshot=>{
-    entries = snapshot.val() || {};
-    renderCards();
-    if(currentClass) renderTable(currentClass);
+function saveEntry(){
+  const kelas=el('kelas').value;
+  if(!kelas)return alert('Pilih kelas dulu');
+  const key = kelasKeyMap[kelas];
+  const tanggal=el('tanggal').value;
+  const pertemuan=el('pertemuan').value;
+  const topik=el('topik').value;
+  const aktivitas=[...el('aktivitasList').children].map(ch=>ch.firstChild.textContent);
+  const kehadiran=[...el('attendanceContainer').children].map(r=>{
+    const [i,s]=r.querySelectorAll('input,select');
+    return `${i.value || '-'} (${s.value})`;
   });
+  const catatan=el('catatan').value;
+  push(ref(db,`entries/${key}`),{tanggal,pertemuan,topik,aktivitas,kehadiran,catatan});
+  alert('Data tersimpan!');
+  ['tanggal','pertemuan','topik','catatan'].forEach(id=>el(id).value='');
+  el('aktivitasList').innerHTML='';
+  el('attendanceContainer').innerHTML='';
 }
 
 el('addAktivitasBtn').onclick=addAktivitas;
-el('addAttBtn').onclick=addKehadiran;
-el('saveBtn').onclick=performSave;
+el('addAttBtn').onclick=addAttendanceRow;
+el('saveBtn').onclick=saveEntry;
 
-subscribe();
+onValue(ref(db,'entries'),snap=>{
+  entries=snap.val()||{};
+  renderCards();
+  if(currentClass) renderTable(currentClass);
+  if (currentClass === c) card.classList.add('active');
+
+});
 </script>
-
 </body>
 </html>

@@ -230,6 +230,19 @@ const CLASSES = [
   "G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"
 ];
 
+// Mapping nama kelas ke key Firebase
+const kelasKeyMap = {
+  "G12 Antropologi":"G12_Antropologi",
+  "G11 - 1 Antropologi":"G11_1_Antropologi",
+  "G11 - 2 Antropologi":"G11_2_Antropologi",
+  "G10 A Geografi":"G10_A_Geografi",
+  "G10 B Geografi":"G10_B_Geografi",
+  "G10 Inter A Geografi":"G10_Inter_A_Geografi",
+  "G10 Inter B Geografi":"G10_Inter_B_Geografi",
+  "G10 Inter A Sosiologi":"G10_Inter_A_Sosiologi",
+  "G10 Inter B Sosiologi":"G10_Inter_B_Sosiologi"
+};
+
 const el = id => document.getElementById(id);
 let currentClass = null;
 let entries = {};
@@ -241,8 +254,8 @@ function renderCards(){
   const wrap = el('cardsWrap');
   wrap.innerHTML = '';
   CLASSES.forEach(c=>{
-    const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
-    const count = firebaseKey ? Object.keys(entries[firebaseKey]).length : 0;
+    const key = kelasKeyMap[c];
+    const count = entries[key] ? Object.keys(entries[key]).length : 0;
     const card = document.createElement('div');
     card.className='card';
     card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
@@ -259,9 +272,9 @@ function renderCards(){
 function renderTable(c){
   const wrap = el('tableWrap'); 
   wrap.innerHTML='';
-  const firebaseKey = Object.keys(entries).find(k => k.trim() === c);
-  const rowsObj = firebaseKey ? entries[firebaseKey] : {};
-  const keys = Object.keys(rowsObj || {});
+  const key = kelasKeyMap[c];
+  const rowsObj = entries[key] || {};
+  const keys = Object.keys(rowsObj);
   let html = `
     <div style="display:flex;flex-wrap:wrap;justify-content:flex-end;gap:10px;margin-bottom:10px">
       <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
@@ -295,7 +308,7 @@ function renderTable(c){
           <td>${r.aktivitas.map(escapeHtml).join(', ')}</td>
           <td>${r.kehadiran.map(escapeHtml).join('<br>')}</td>
           <td>${escapeHtml(r.catatan)}</td>
-          <td><button class="btn red" onclick="deleteEntry('${firebaseKey}','${k}')">Hapus</button></td>
+          <td><button class="btn red" onclick="deleteEntry('${key}','${k}')">Hapus</button></td>
         </tr>
       `;
     });
@@ -316,11 +329,6 @@ window.exportPDF = (kelas) => {
       th, td { border: 1px solid #ddd; padding: 8px; text-align:left; vertical-align:top; }
       th { background: #f0f4ff; }
       tr:hover { background: #e0e7ff; }
-      @media print {
-        body { margin:0; }
-        table { page-break-inside: auto; }
-        tr { page-break-inside: avoid; page-break-after: auto; }
-      }
     </style>
     </head><body>
       <h2>Journal Activities - ${kelas}</h2>
@@ -356,26 +364,24 @@ function addKehadiran(){
 function performSave(){
   const k=el('kelas').value.trim(); 
   if(!k) return alert('Pilih kelas dulu!');
-  const data={
-    tanggal:el('tanggal').value,
-    pertemuan:el('pertemuan').value,
-    topik:el('topik').value,
-    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.textContent.replace('×','').trim()),
-    kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
+  const kelasKey = kelasKeyMap[k];
+  const data = {
+    tanggal: el('tanggal').value,
+    pertemuan: el('pertemuan').value,
+    topik: el('topik').value,
+    aktivitas: [...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.textContent.replace('×','').trim()),
+    kehadiran: [...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
       const nama=r.querySelector('input').value.trim(); 
       const st=r.querySelector('select').value;
       return nama ? `${nama} (${st.charAt(0)})` : null;
     }).filter(Boolean),
-    catatan:el('catatan').value
+    catatan: el('catatan').value
   };
-  if(!data.tanggal||!data.pertemuan||!data.topik) return alert('Lengkapi data dulu!');
-  push(ref(db, `entries/${k}`), data);
+  if(!data.tanggal || !data.pertemuan || !data.topik) return alert('Lengkapi data dulu!');
+  push(ref(db, `entries/${kelasKey}`), data);
   el('aktivitasList').innerHTML=''; 
   el('attendanceContainer').innerHTML='';
-  el('topik').value=''; 
-  el('pertemuan').value=''; 
-  el('catatan').value=''; 
-  el('tanggal').value='';
+  el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
 }
 
 function subscribe(){

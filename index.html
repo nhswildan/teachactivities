@@ -249,7 +249,12 @@ function renderTable(c){
   let html = `<div style="display:flex;justify-content:end;margin-bottom:10px">
     <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
   </div>`;
-  html += `<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
+  html += `html += `<div style="display:flex;justify-content:end;gap:10px;margin-bottom:10px">
+  <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
+  <button class="btn" onclick="exportPDF('${c}')">Export PDF</button>
+</div>
+<table><thead><tr><th>Tanggal</th><th>Pertemuan</th>...
+`;
   if(keys.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
   else keys.forEach(k=>{
     const r = rowsObj[k];
@@ -268,6 +273,26 @@ function renderTable(c){
 }
 
 window.deleteEntry = (c, key)=>{
+  window.exportPDF = (kelas) => {
+  const tableContent = document.getElementById('tableWrap').innerHTML;
+  const printWindow = window.open('', '', 'width=900,height=700');
+  printWindow.document.write(`
+    <html><head><title>Journal - ${kelas}</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 20px; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border: 1px solid #ddd; padding: 8px; }
+      th { background: #f2f2f2; }
+    </style>
+    </head><body>
+      <h2>Journal Activities - ${kelas}</h2>
+      ${tableContent}
+    </body></html>
+  `);
+  printWindow.document.close();
+  printWindow.print();
+};
+
   remove(ref(db, `entries/${c}/${key}`));
 };
 

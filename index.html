@@ -198,19 +198,54 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(21,72,191,0.03),transparent
   </div>
 </div>
 
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+  import { 
+    getFirestore, collection, getDocs, addDoc, deleteDoc, doc 
+  } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
+  authDomain: "journal-nhs.firebaseapp.com",
+  databaseURL: "https://journal-nhs-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "journal-nhs",
+  storageBucket: "journal-nhs.firebasestorage.app",
+  messagingSenderId: "162381796113",
+  appId: "1:162381796113:web:4c65bd5c934ce9af55f2b0",
+  measurementId: "G-8M7RF0P9NG"
+};
+
+  // Inisialisasi Firebase
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // Jadikan global agar bisa dipakai di script lain
+  window.db = db;
+  window.firestoreFns = { collection, getDocs, addDoc, deleteDoc, doc };
+</script>
+
 <script>
 const CLASSES=["G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi","G10 A Geografi","G10 B Geografi","G10 Inter A Geografi","G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"];
 const STORAGE_KEY='journal_entries_v5';
 let entries={}, currentAction=null, currentClass=null, deleteIndex=null;
 
 const el=id=>document.getElementById(id);
+async function loadEntries() {
+  entries = {};
+  CLASSES.forEach(c => entries[c] = []);
 
-function loadEntries(){
-  entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
-  CLASSES.forEach(c=>{if(!entries[c]) entries[c]=[]});
+  const { collection, getDocs } = window.firestoreFns;
+  const snapshot = await getDocs(collection(window.db, "journalEntries"));
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+    if (!entries[data.kelas]) entries[data.kelas] = [];
+    entries[data.kelas].push({ id: docSnap.id, ...data });
+  });
+
+  renderCards();
 }
-
-function saveEntries(){localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));}
 
 function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
 
@@ -273,7 +308,14 @@ el('popupYes').onclick=()=>{
   el('popup').style.display='none';
 };
 
-function performDelete(){entries[currentClass].splice(deleteIndex,1); saveEntries(); renderTable(currentClass); renderCards();}
+async function performDelete() {
+  const { deleteDoc, doc } = window.firestoreFns;
+  const target = entries[currentClass][deleteIndex];
+  await deleteDoc(doc(window.db, "journalEntries", target.id));
+  await loadEntries();
+  renderCards();
+  renderTable(currentClass);
+}
 
 function addAktivitas(){
   const val=el('aktivitasSelect').value; if(!val) return;
@@ -291,30 +333,55 @@ function addKehadiran(){
   cont.appendChild(row);
 }
 
-function performSave(){
-  const k=el('kelas').value; if(!k) return;
-  const data={
-    tanggal:el('tanggal').value,
-    pertemuan:el('pertemuan').value,
-    topik:el('topik').value,
-    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.childNodes[0].nodeValue.trim()),
-    kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
-      const nama=r.querySelector('input').value; const st=r.querySelector('select').value;
-      return `${nama} (${st.charAt(0)})`;
-    }),
-    catatan:el('catatan').value
+async function performSave() {
+  const k = el('kelas').value; 
+  if (!k) return;
+
+  const data = {
+    kelas: k,
+    tanggal: el('tanggal').value,
+    pertemuan: el('pertemuan').value,
+    topik: el('topik').value,
+    aktivitas: [...el('aktivitasList').querySelectorAll('.chip')]
+                .map(c => c.childNodes[0].nodeValue.trim()),
+    kehadiran: [...el('attendanceContainer').querySelectorAll('.att-row')]
+                .map(r => {
+                  const nama = r.querySelector('input').value;
+                  const st = r.querySelector('select').value;
+                  return `${nama} (${st.charAt(0)})`;
+                }),
+    catatan: el('catatan').value
   };
-  if(!data.tanggal||!data.pertemuan||!data.topik) return;
-  entries[k].push(data); saveEntries(); renderCards(); renderTable(k);
-  // Bersihkan form
-  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML=''; el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
+
+  // Validasi input wajib
+  if (!data.tanggal || !data.pertemuan || !data.topik) return;
+
+  // Simpan ke Firebase Firestore
+  const { addDoc, collection } = window.firestoreFns;
+  await addDoc(collection(window.db, "journalEntries"), data);
+
+  // Ambil ulang data dari Firestore agar tampilan update
+  await loadEntries();
+  renderTable(k);
+
+  // Bersihkan form setelah simpan
+  el('aktivitasList').innerHTML = '';
+  el('attendanceContainer').innerHTML = '';
+  el('topik').value = '';
+  el('pertemuan').value = '';
+  el('catatan').value = '';
+  el('tanggal').value = '';
 }
+
 
 el('addAktivitasBtn').onclick=addAktivitas;
 el('addAttBtn').onclick=addKehadiran;
 el('saveBtn').onclick=confirmSave;
 
-(function init(){loadEntries();renderCards();})();
+(function init(){
+  loadEntries();
+})();
+
 
   // ==== Firebase Setup ====
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional

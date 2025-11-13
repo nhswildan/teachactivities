@@ -198,12 +198,131 @@ tbody tr:hover{background:linear-gradient(90deg,rgba(21,72,191,0.03),transparent
   </div>
 </div>
 
+<script>
+const CLASSES=["G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi","G10 A Geografi","G10 B Geografi","G10 Inter A Geografi","G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"];
+const STORAGE_KEY='journal_entries_v5';
+let entries={}, currentAction=null, currentClass=null, deleteIndex=null;
+
+const el=id=>document.getElementById(id);
+
+function loadEntries(){
+  entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}');
+  CLASSES.forEach(c=>{if(!entries[c]) entries[c]=[]});
+}
+
+function saveEntries(){localStorage.setItem(STORAGE_KEY, JSON.stringify(entries));}
+
+function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
+
+function formatDate(dateStr){
+  if(!dateStr) return '';
+  const [y,m,d]=dateStr.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function renderCards(){
+  const wrap=el('cardsWrap'); wrap.innerHTML='';
+  CLASSES.forEach(c=>{
+    const card=document.createElement('div');
+    card.className='card';
+    const count=entries[c].length;
+    card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
+    card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active')); card.classList.add('active'); renderTable(c)};
+    wrap.appendChild(card);
+  });
+}
+
+function renderTable(c){
+  const wrap=el('tableWrap'); wrap.innerHTML='';
+  const rows=entries[c];
+  let html=`<div style="display:flex;justify-content:end;margin-bottom:10px">
+    <button class="btn gray" onclick="renderTable('${c}')">Refresh</button>
+    <button class="btn" style="margin-left:8px" onclick="exportTableToPDF('${c}')">Export PDF</button>
+  </div>`;
+  html+=`<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
+  if(rows.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
+  else rows.forEach((r,i)=>html+=`<tr>
+    <td>${formatDate(r.tanggal)}</td>
+    <td>${r.pertemuan}</td>
+    <td>${r.topik}</td>
+    <td>${r.aktivitas.join(', ')}</td>
+    <td>${r.kehadiran.join('<br>')}</td>
+    <td>${r.catatan}</td>
+    <td><button class="btn red" onclick="confirmDelete('${c}',${i})">Hapus</button></td>
+  </tr>`);
+  html+='</tbody></table>'; wrap.innerHTML=html;
+}
+
+function exportTableToPDF(c){
+  const rows=entries[c];
+  const w=window.open('','_blank');
+  let html=`<html><head><title>${c}</title></head><body><h2>${c}</h2>
+    <table border="1" cellspacing="0" cellpadding="6" width="100%">
+    <tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th></tr>`;
+  rows.forEach(r=>{html+=`<tr><td>${formatDate(r.tanggal)}</td><td>${r.pertemuan}</td><td>${r.topik}</td><td>${r.aktivitas.join(', ')}</td><td>${r.kehadiran.join('<br>')}</td><td>${r.catatan}</td></tr>`;});
+  html+='</table></body></html>'; w.document.write(html); w.print();
+}
+
+function confirmSave(){currentAction='save'; el('popupMessage').innerText='Sudah yakin dengan data ini?'; el('popup').style.display='flex';}
+function confirmDelete(c,i){currentAction='delete'; currentClass=c; deleteIndex=i; el('popupMessage').innerText='Yakin hapus data ini?'; el('popup').style.display='flex';}
+
+el('popupNo').onclick=()=>el('popup').style.display='none';
+el('popupYes').onclick=()=>{
+  if(currentAction==='save'){performSave();}
+  else if(currentAction==='delete'){performDelete();}
+  el('popup').style.display='none';
+};
+
+function performDelete(){entries[currentClass].splice(deleteIndex,1); saveEntries(); renderTable(currentClass); renderCards();}
+
+function addAktivitas(){
+  const val=el('aktivitasSelect').value; if(!val) return;
+  const list=el('aktivitasList');
+  const chip=document.createElement('div'); chip.className='chip';
+  chip.innerHTML=`${val}<span class="x" onclick="this.parentElement.remove()">×</span>`;
+  list.appendChild(chip);
+  el('aktivitasSelect').value='';
+}
+
+function addKehadiran(){
+  const cont=el('attendanceContainer');
+  const row=document.createElement('div'); row.className='att-row';
+  row.innerHTML=`<input type="text" placeholder="Nama siswa"><select><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select><button class="del-x" onclick="this.parentElement.remove()">×</button>`;
+  cont.appendChild(row);
+}
+
+function performSave(){
+  const k=el('kelas').value; if(!k) return;
+  const data={
+    tanggal:el('tanggal').value,
+    pertemuan:el('pertemuan').value,
+    topik:el('topik').value,
+    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.childNodes[0].nodeValue.trim()),
+    kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
+      const nama=r.querySelector('input').value; const st=r.querySelector('select').value;
+      return `${nama} (${st.charAt(0)})`;
+    }),
+    catatan:el('catatan').value
+  };
+  if(!data.tanggal||!data.pertemuan||!data.topik) return;
+  entries[k].push(data); saveEntries(); renderCards(); renderTable(k);
+  // Bersihkan form
+  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML=''; el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
+}
+
+el('addAktivitasBtn').onclick=addAktivitas;
+el('addAttBtn').onclick=addKehadiran;
+el('saveBtn').onclick=confirmSave;
+
+(function init(){loadEntries();renderCards();})();
+</script>
+
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
-  // 🔧 Konfigurasi Firebase kamu di sini:
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  // 🔧 Konfigurasi Firebase kamu
+ // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
   authDomain: "journal-nhs.firebaseapp.com",
@@ -218,117 +337,27 @@ const firebaseConfig = {
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // 🏫 Daftar kelas
-  const CLASSES = [
-    "G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi",
-    "G10 A Geografi","G10 B Geografi","G10 Inter A Geografi",
-    "G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"
-  ];
-
-  let currentAction=null, currentClass=null, deleteId=null;
-
-  const el=id=>document.getElementById(id);
-
-  function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
-  function formatDate(dateStr){if(!dateStr)return'';const [y,m,d]=dateStr.split('-');return `${d}/${m}/${y}`;}
-
-  // 🧾 Load data dari Firestore
-  async function loadEntries(){
-    const result={};
-    for(const c of CLASSES) result[c]=[];
-    const snapshot = await getDocs(collection(db, "journalEntries"));
-    snapshot.forEach(docSnap=>{
-      const d=docSnap.data();
-      if(result[d.kelas]) result[d.kelas].push({...d,id:docSnap.id});
-    });
-    renderCards(result);
-  }
-
-  function renderCards(data){
-    const wrap=el('cardsWrap'); wrap.innerHTML='';
-    CLASSES.forEach(c=>{
-      const card=document.createElement('div');
-      card.className='card';
-      const count=data[c].length;
-      card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
-      card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active')); card.classList.add('active'); renderTable(c,data[c]);};
-      wrap.appendChild(card);
-    });
-  }
-
-  function renderTable(c,rows){
-    const wrap=el('tableWrap'); wrap.innerHTML='';
-    let html=`<div style="display:flex;justify-content:end;margin-bottom:10px">
-      <button class="btn gray" onclick="location.reload()">Refresh</button>
-    </div>`;
-    html+=`<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
-    if(rows.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
-    else rows.forEach((r)=>html+=`<tr>
-      <td>${formatDate(r.tanggal)}</td>
-      <td>${r.pertemuan}</td>
-      <td>${r.topik}</td>
-      <td>${r.aktivitas.join(', ')}</td>
-      <td>${r.kehadiran.join('<br>')}</td>
-      <td>${r.catatan}</td>
-      <td><button class="btn red" onclick="deleteEntry('${r.id}')">Hapus</button></td>
-    </tr>`);
-    html+='</tbody></table>'; wrap.innerHTML=html;
-  }
-
-  async function deleteEntry(id){
-    if(!confirm("Yakin hapus data ini?")) return;
-    await deleteDoc(doc(db, "journalEntries", id));
-    alert("Data dihapus!");
-    loadEntries();
-  }
-
-  function addAktivitas(){
-    const val=el('aktivitasSelect').value; if(!val) return;
-    const list=el('aktivitasList');
-    const chip=document.createElement('div'); chip.className='chip';
-    chip.innerHTML=`${val}<span class="x" onclick="this.parentElement.remove()">×</span>`;
-    list.appendChild(chip);
-    el('aktivitasSelect').value='';
-  }
-
-  function addKehadiran(){
-    const cont=el('attendanceContainer');
-    const row=document.createElement('div'); row.className='att-row';
-    row.innerHTML=`<input type="text" placeholder="Nama siswa"><select><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select><button class="del-x" onclick="this.parentElement.remove()">×</button>`;
-    cont.appendChild(row);
-  }
-
-  async function performSave(){
-    const k=el('kelas').value; if(!k) return;
-    const data={
-      kelas:k,
-      tanggal:el('tanggal').value,
-      pertemuan:el('pertemuan').value,
-      topik:el('topik').value,
-      aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.childNodes[0].nodeValue.trim()),
-      kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
-        const nama=r.querySelector('input').value; const st=r.querySelector('select').value;
-        return `${nama} (${st.charAt(0)})`;
-      }),
-      catatan:el('catatan').value
+  // 🔘 Ganti fungsi tombol Simpan kamu (ID-nya sama seperti di kode kamu)
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    const data = {
+      kelas: document.getElementById("kelas").value,
+      tanggal: document.getElementById("tanggal").value,
+      pertemuan: document.getElementById("pertemuan").value,
+      topik: document.getElementById("topik").value,
+      catatan: document.getElementById("catatan").value,
+      waktuSimpan: new Date().toISOString(),
     };
-    if(!data.tanggal||!data.pertemuan||!data.topik) return alert("Lengkapi semua field!");
-    await addDoc(collection(db, "journalEntries"), data);
-    alert("Data disimpan ke Firebase!");
-    el('aktivitasList').innerHTML='';
-    el('attendanceContainer').innerHTML='';
-    el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
-    loadEntries();
-  }
 
-  el('addAktivitasBtn').onclick=addAktivitas;
-  el('addAttBtn').onclick=addKehadiran;
-  el('saveBtn').onclick=performSave;
-
-  // Jalankan saat halaman dimuat
-  loadEntries();
+    // kirim ke Firestore
+    try {
+      await addDoc(collection(db, "journalEntries"), data);
+      alert("✅ Data berhasil disimpan ke Firebase!");
+    } catch (err) {
+      console.error(err);
+      alert("❌ Gagal menyimpan data: " + err.message);
+    }
+  });
 </script>
 
 </body>
 </html>
-

@@ -317,47 +317,5 @@ el('saveBtn').onclick=confirmSave;
 (function init(){loadEntries();renderCards();})();
 </script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-  import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
-
-  // 🔧 Konfigurasi Firebase kamu
- // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
-  authDomain: "journal-nhs.firebaseapp.com",
-  databaseURL: "https://journal-nhs-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "journal-nhs",
-  storageBucket: "journal-nhs.firebasestorage.app",
-  messagingSenderId: "162381796113",
-  appId: "1:162381796113:web:4c65bd5c934ce9af55f2b0",
-  measurementId: "G-8M7RF0P9NG"
-};
-
-  const app = initializeApp(firebaseConfig);
-  const db = getFirestore(app);
-
-  // 🔘 Ganti fungsi tombol Simpan kamu (ID-nya sama seperti di kode kamu)
-  document.getElementById("saveBtn").addEventListener("click", async () => {
-    const data = {
-      kelas: document.getElementById("kelas").value,
-      tanggal: document.getElementById("tanggal").value,
-      pertemuan: document.getElementById("pertemuan").value,
-      topik: document.getElementById("topik").value,
-      catatan: document.getElementById("catatan").value,
-      waktuSimpan: new Date().toISOString(),
-    };
-
-    // kirim ke Firestore
-    try {
-      await addDoc(collection(db, "journalEntries"), data);
-      alert("✅ Data berhasil disimpan ke Firebase!");
-    } catch (err) {
-      console.error(err);
-      alert("❌ Gagal menyimpan data: " + err.message);
-    }
-  });
-</script>
-
 </body>
 </html>

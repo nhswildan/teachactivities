@@ -1,220 +1,155 @@
-<!doctype html>
-<html lang="id">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Journal Activities</title>
-<link rel="icon" type="image/png" href="./Favicon NHS.png">
-<style>
-/* semua CSS kamu sama seperti sebelumnya */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600;700&display=swap');
-:root{
-  --accent:#1548bf;
-  --accent-strong:#123fa6;
-  --danger:#e11d48;
-  --bg:#f7f8fb;
-  --card:#ffffff;
-  --muted:#6b7280;
-  --text:#0f172a;
-  --radius:12px;
-  --maxwidth:1280px;
-}
-*{box-sizing:border-box;font-family:'Noto Sans',sans-serif;}
-html,body{height:100%;margin:0;background:var(--bg);color:var(--text);}
-header.header{display:flex;align-items:center;justify-content:space-between;padding:12px 34px;background:var(--card);box-shadow:0 3px 12px rgba(0,0,0,0.06);position:fixed;top:0;left:0;width:100%;z-index:10;}
-.logo img{height:30px;width:auto;border-radius:6px}
-.title{flex:1;text-align:center}
-.title h1{margin:0;font-size:20px;font-weight:700;color:#000}
-.title p{margin:6px 0 0 0;color:var(--muted);font-size:13px}
-.profile{display:flex;align-items:center;gap:10px}
-.profile svg{stroke:#9ca3af}
-.profile .name{font-size:14px;color:#374151}
-.container{max-width:var(--maxwidth);margin:0 auto;padding:120px 20px 60px 20px;}
-.form-section{background:var(--card);padding:22px;border-radius:var(--radius);box-shadow:0 4px 18px rgba(15,23,42,0.03);margin-bottom:20px}
-.form-row{display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap}
-label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
-input[type=text],input[type=number],input[type=date],select,textarea{width:100%;padding:10px;border-radius:calc(var(--radius) - 2px);border:1px solid #e6e9ef;font-size:14px;background:#fff;transition:box-shadow .18s, border-color .18s;}
-input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 6px 18px rgba(21,72,191,0.08);}
-select{cursor:pointer}
-.btn{background:var(--accent);color:#fff;border:0;padding:9px 14px;border-radius:10px;font-weight:600;cursor:pointer;transition:all .2s}
-.btn:hover{background:var(--accent-strong);transform:translateY(-1px)}
-.btn.gray{background:#eef2f7;color:#374151}
-.btn.red{background:var(--danger);color:#fff}
-.chip{display:inline-flex;align-items:center;background:rgba(21,72,191,0.08);color:var(--accent);padding:6px 10px;border-radius:20px;margin:4px 6px;font-weight:600;font-size:13px}
-.chip .x{margin-left:8px;cursor:pointer;color:#9b0b2a;font-weight:700}
-.att-row{display:flex;gap:10px;align-items:center;margin-bottom:8px}
-.att-row input{flex:1}
-.att-row select{width:170px}
-.att-row .del-x{background:transparent;border:0;color:var(--danger);font-weight:700;cursor:pointer;font-size:16px}
-.cards-wrap{margin:14px 0 6px 0;display:flex;flex-wrap:wrap;gap:10px}
-.card{background:var(--card);padding:10px 12px;border-radius:14px;box-shadow:0 6px 18px rgba(15,23,42,0.03);cursor:pointer;transition:all .12s}
-.card:hover{transform:translateY(-4px);box-shadow:0 12px 28px rgba(21,72,191,0.06);}
-.card.active{background:var(--accent);color:#fff;}
-.card.active .small{color:#e0e7ff !important}
-.table-wrap{margin-top:16px}
-table{width:100%;border-collapse:collapse;background:var(--card);border-radius:10px;overflow:hidden;box-shadow:0 6px 18px rgba(15,23,42,0.04)}
-thead th{background:#fafcff;padding:12px;text-align:left;font-weight:700}
-tbody td{padding:12px;border-top:1px solid #f3f5f8;text-align:left;vertical-align:top;font-size:14px}
-tbody tr:hover{background:linear-gradient(90deg,rgba(21,72,191,0.03),transparent)}
-.popup{position:fixed;top:0;left:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,0.4);z-index:100;}
-.popup-content{background:#fff;padding:30px 40px;border-radius:14px;text-align:center;box-shadow:0 6px 24px rgba(15,23,42,0.1);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);animation:fadeIn .25s ease;}
-.popup-content p{font-size:15px;margin-bottom:20px;font-weight:600}
-.popup-content .btn{margin:0 8px}
-@keyframes fadeIn{from{opacity:0;transform:translate(-50%,-60%);}to{opacity:1;transform:translate(-50%,-50%);}}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Journal Activities</title>
+  <link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/5/55/Firebase_Logo.png" />
+  <style>
+    body {
+      margin: 0;
+      font-family: "Poppins", sans-serif;
+      background: #f8f9fb;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: #e9f5f2;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    header img {
+      height: 40px;
+      margin-right: 8px;
+    }
+    .user {
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+    }
+    .title {
+      text-align: center;
+      margin-top: 10px;
+    }
+    main {
+      max-width: 900px;
+      margin: 40px auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .entry {
+      border: 1px solid #ddd;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      margin: 6px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+  </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="logo"><img src="./Logo NHS NA.png" alt="logo"></div>
-  <div class="title">
-    <h1>Journal Activities</h1>
-    <p>Academic Year 2025/2026</p>
-  </div>
-  <div class="profile">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-3.314 2.686-6 6-6h4c3.314 0 6 2.686 6 6"/></svg>
-    <div class="name">Wildan Fido Ramadhan</div>
-  </div>
-</header>
+  <header>
+    <div style="display:flex; align-items:center;">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" alt="Logo1" />
+      <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Firebase_Logo.png" alt="Logo2" />
+    </div>
+    <div class="title">
+      <h2>Journal Activities</h2>
+      <p>Academic Year 2025/2026</p>
+    </div>
+    <div class="user">
+      <span>👤 Wildan Fido Ramadhan</span>
+    </div>
+  </header>
 
-<main class="container">
-  <!-- form-section sama persis dengan punyamu -->
-  <!-- ... -->
-</main>
+  <main>
+    <h3>Add Activity</h3>
+    <form id="activityForm">
+      <input type="text" id="subject" placeholder="Subject/Class" required />
+      <textarea id="activity" placeholder="Activity Details" required></textarea>
+      <button type="submit">Save</button>
+    </form>
 
-<div class="popup" id="popup">
-  <div class="popup-content" id="popupContent">
-    <p id="popupMessage">Sudah yakin dengan data ini?</p>
-    <button id="popupYes" class="btn">Yakin</button>
-    <button id="popupNo" class="btn gray">Batal</button>
-  </div>
-</div>
+    <h3 style="margin-top:30px;">Saved Activities</h3>
+    <div id="entries"></div>
+  </main>
 
-<!-- 🔥 Tambah Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js"></script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
-  authDomain: "journal-nhs.firebaseapp.com",
-  databaseURL: "https://journal-nhs-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "journal-nhs",
-  storageBucket: "journal-nhs.firebasestorage.app",
-  messagingSenderId: "162381796113",
-  appId: "1:162381796113:web:4c65bd5c934ce9af55f2b0",
-  measurementId: "G-8M7RF0P9NG"
-};
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    const firebaseConfig = {
+      apiKey: "AIzaSyCuS1YmoA9kcXbqm34jMUDgk73njqIKc4s",
+      authDomain: "journal-nhs.firebaseapp.com",
+      projectId: "journal-nhs",
+      storageBucket: "journal-nhs.firebasestorage.app",
+      messagingSenderId: "162381796113",
+      appId: "1:162381796113:web:4c65bd5c934ce9af55f2b0",
+      measurementId: "G-8M7RF0P9NG"
+    };
 
-const CLASSES=["G12 Antropologi","G11 - 1 Antropologi","G11 - 2 Antropologi","G10 A Geografi","G10 B Geografi","G10 Inter A Geografi","G10 Inter B Geografi","G10 Inter A Sosiologi","G10 Inter B Sosiologi"];
-let entries={}, currentAction=null, currentClass=null, deleteId=null;
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const form = document.getElementById("activityForm");
+    const entriesDiv = document.getElementById("entries");
 
-const el=id=>document.getElementById(id);
+    async function loadEntries() {
+      entriesDiv.innerHTML = "<p>Loading...</p>";
+      const querySnapshot = await getDocs(collection(db, "journal_entries"));
+      entriesDiv.innerHTML = "";
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.innerHTML = `
+          <strong>${data.subject}</strong><br>
+          <p>${data.activity}</p>
+          <button data-id="${docSnap.id}">Delete</button>
+        `;
+        div.querySelector("button").addEventListener("click", async (e) => {
+          await deleteDoc(doc(db, "journal_entries", e.target.dataset.id));
+          loadEntries();
+        });
+        entriesDiv.appendChild(div);
+      });
+      if (!entriesDiv.innerHTML.trim()) entriesDiv.innerHTML = "<p>No activities yet.</p>";
+    }
 
-function escapeHtml(s){return s?s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])):'';}
-function formatDate(dateStr){if(!dateStr) return '';const [y,m,d]=dateStr.split('-');return `${d}/${m}/${y}`;}
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const subject = document.getElementById("subject").value.trim();
+      const activity = document.getElementById("activity").value.trim();
+      if (!subject || !activity) return;
+      await addDoc(collection(db, "journal_entries"), { subject, activity, date: new Date().toISOString() });
+      form.reset();
+      loadEntries();
+    });
 
-async function loadEntries(){
-  entries={}; CLASSES.forEach(c=>entries[c]=[]);
-  const snapshot = await getDocs(collection(db, "journal_entries"));
-  snapshot.forEach(docSnap=>{
-    const data = docSnap.data();
-    if(entries[data.kelas]) entries[data.kelas].push({...data, id:docSnap.id});
-  });
-  renderCards();
-}
-
-function renderCards(){
-  const wrap=el('cardsWrap'); wrap.innerHTML='';
-  CLASSES.forEach(c=>{
-    const card=document.createElement('div');
-    card.className='card';
-    const count=entries[c].length;
-    card.innerHTML=`<div style="font-weight:700">${escapeHtml(c)}</div><div class="small" style="margin-top:6px;color:var(--muted)">${count} sesi</div>`;
-    card.onclick=()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('active'));card.classList.add('active');renderTable(c);};
-    wrap.appendChild(card);
-  });
-}
-
-function renderTable(c){
-  const wrap=el('tableWrap'); wrap.innerHTML='';
-  const rows=entries[c];
-  let html=`<div style="display:flex;justify-content:end;margin-bottom:10px">
-    <button class="btn gray" onclick="loadEntries()">Refresh</button>
-  </div>`;
-  html+=`<table><thead><tr><th>Tanggal</th><th>Pertemuan</th><th>Topik</th><th>Aktivitas</th><th>Kehadiran</th><th>Catatan</th><th>Aksi</th></tr></thead><tbody>`;
-  if(rows.length===0) html+='<tr><td colspan="7" style="padding:20px;color:var(--muted)">Belum ada data.</td></tr>';
-  else rows.forEach((r)=>html+=`<tr>
-    <td>${formatDate(r.tanggal)}</td><td>${r.pertemuan}</td><td>${r.topik}</td>
-    <td>${r.aktivitas.join(', ')}</td><td>${r.kehadiran.join('<br>')}</td><td>${r.catatan}</td>
-    <td><button class="btn red" onclick="confirmDelete('${r.id}','${c}')">Hapus</button></td>
-  </tr>`);
-  html+='</tbody></table>'; wrap.innerHTML=html;
-}
-
-async function performSave(){
-  const k=el('kelas').value; if(!k) return;
-  const data={
-    kelas:k,
-    tanggal:el('tanggal').value,
-    pertemuan:el('pertemuan').value,
-    topik:el('topik').value,
-    aktivitas:[...el('aktivitasList').querySelectorAll('.chip')].map(c=>c.childNodes[0].nodeValue.trim()),
-    kehadiran:[...el('attendanceContainer').querySelectorAll('.att-row')].map(r=>{
-      const nama=r.querySelector('input').value; const st=r.querySelector('select').value;
-      return `${nama} (${st.charAt(0)})`;
-    }),
-    catatan:el('catatan').value
-  };
-  if(!data.tanggal||!data.pertemuan||!data.topik) return;
-  await addDoc(collection(db, "journal_entries"), data);
-  await loadEntries();
-  el('aktivitasList').innerHTML=''; el('attendanceContainer').innerHTML=''; el('topik').value=''; el('pertemuan').value=''; el('catatan').value=''; el('tanggal').value='';
-}
-
-async function performDelete(id,c){
-  await deleteDoc(doc(db, "journal_entries", id));
-  await loadEntries(); renderTable(c);
-}
-
-window.confirmDelete=function(id,c){
-  currentAction='delete'; deleteId=id; currentClass=c; el('popupMessage').innerText='Yakin hapus data ini?'; el('popup').style.display='flex';
-}
-
-el('popupNo').onclick=()=>el('popup').style.display='none';
-el('popupYes').onclick=async ()=>{
-  if(currentAction==='delete'){await performDelete(deleteId,currentClass);}
-  el('popup').style.display='none';
-};
-
-function addAktivitas(){
-  const val=el('aktivitasSelect').value; if(!val) return;
-  const list=el('aktivitasList');
-  const chip=document.createElement('div'); chip.className='chip';
-  chip.innerHTML=`${val}<span class="x" onclick="this.parentElement.remove()">×</span>`;
-  list.appendChild(chip);
-  el('aktivitasSelect').value='';
-}
-function addKehadiran(){
-  const cont=el('attendanceContainer');
-  const row=document.createElement('div'); row.className='att-row';
-  row.innerHTML=`<input type="text" placeholder="Nama siswa"><select><option>Hadir</option><option>Izin</option><option>Sakit</option><option>Alpa</option></select><button class="del-x" onclick="this.parentElement.remove()">×</button>`;
-  cont.appendChild(row);
-}
-
-el('addAktivitasBtn').onclick=addAktivitas;
-el('addAttBtn').onclick=addKehadiran;
-el('saveBtn').onclick=()=>{currentAction='save'; el('popupMessage').innerText='Sudah yakin dengan data ini?'; el('popup').style.display='flex';};
-el('popupYes').onclick=async ()=>{
-  if(currentAction==='save'){await performSave();}
-  else if(currentAction==='delete'){await performDelete(deleteId,currentClass);}
-  el('popup').style.display='none';
-};
-
-window.addEventListener('DOMContentLoaded',loadEntries);
-</script>
+    loadEntries();
+  </script>
 </body>
 </html>
